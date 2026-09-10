@@ -49,6 +49,13 @@
        inertia, so WEIGH ONE and replace this before trusting any dynamics. -->
   <xacro:property name="mass_nema17_37_5" value="0.250"/>
 
+  <!-- [ESTIMATE] NEMA 17, 60 mm body - the J2 motor, carried by the T-joint.
+       A 60 mm can is among the longest NEMA 17s made; catalogue weights run
+       roughly 0.40-0.50 kg, so this is a wide guess. It rides on a moving link
+       AND is the heaviest single item so far - about 3x the T-joint itself - so
+       it dominates the J1 inertia. This is the most valuable part to weigh. -->
+  <xacro:property name="mass_nema17_60" value="0.450"/>
+
   <!-- ================================================================ -->
   <!-- Material densities (for volume-based estimates)                   -->
   <!-- ================================================================ -->

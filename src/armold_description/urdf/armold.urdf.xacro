@@ -204,6 +204,35 @@
 
   </link>
 
+  <!--
+    The J1 stepper, held by the mounting bracket above it. Measured:
+
+      bolt pattern  4 x dia 3.00 at (+/-15.500, +/-15.500) = 31.0 mm square,
+                    countersunk to dia 6.50 at the bracket's TOP face (z=8.05)
+                    - so the heads sit flush on top and the screws thread DOWN
+                    into the motor underneath.
+      pilot recess  the bracket's bottom face (z=0) has a dia 23.50 central
+                    opening; a NEMA 17's dia 22 boss seats in it.
+      shaft bore    narrows to dia 13.00 higher up - clearance for the shaft,
+                    which passes up through the bracket and drives the T-joint.
+
+    So the bracket is placed OVER the motor: the motor's mounting face presses
+    against the bracket's underside at z = 0, its body hangs down into the base
+    tube (to z = -37.5 mm, i.e. z = 23.25 in base_link), and the shaft points UP.
+
+    That is the macro's native frame - mounting face at the origin, +Z along the
+    shaft, body into -Z - so this needs no rotation at all: rpy = 0.
+
+    This motor is completely enclosed by the base tube. visual is left on because
+    a box costs 12 triangles, and being able to hide base_link and check the
+    motor sits where it should is worth more than that.
+  -->
+  <xacro:nema17 name="j1_motor" parent="j1_mounting_bracket"
+                mass="${mass_nema17_37_5}" body_length="${37.5 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:nema17>
+
   <!-- ================================================================== -->
   <!-- J1 - base rotation about +Z, driven by the stepper shaft             -->
   <!-- ================================================================== -->
@@ -299,6 +328,39 @@
     </inertial>
 
   </link>
+
+  <!--
+    The J2 stepper, carried by the T-joint. Measured from the mesh:
+
+      bolt pattern  4 x dia 3.00 mm at (x, z) = (+/-15.500, 45.500)
+                    and (+/-15.500, 76.500) -> a 31.0 x 31.0 mm square in the
+                    XZ plane, so the motor axis runs along Y (not Z).
+                    Pattern centre: x = 0, z = 61.000 mm.
+      plate         flat faces at y = -36.000 (outer) and y = -27.950 (inner),
+                    i.e. 8.05 mm thick.
+      screws        enter at y = -36.000 through a dia 6.50 counterbore, pass
+                    through dia 3.00 clearance, and thread into the motor.
+      pilot         recess at r ~= 11.5-11.75 mm (dia 23) just inside y = -27.950
+                    - that is the seat for the NEMA 17's dia 22 boss.
+      shaft         dia 13.0 clearance hole through the plate at (0, 61).
+
+    So the motor's mounting face sits against the plate's INNER face at
+    y = -27.950, its body runs in +Y (to y = +32.05 for a 60 mm can, well inside
+    the part's y extent of 46.8), and its shaft points in -Y.
+
+    The macro's frame is the centre of the mounting face with +Z along the shaft.
+    rpy = (pi/2, 0, 0) rotates that frame's +Z onto -Y, which is where the shaft
+    points; the body then extends along -Z, i.e. +Y. Nothing is scaled or moved
+    by hand - the pose comes straight from the measured face and pattern centre.
+
+    visual is ON here because the motor sits in the open mouth of the T and is
+    genuinely visible; set it to false if the extra draw ever costs anything.
+  -->
+  <xacro:nema17 name="j2_motor" parent="j2_base_t_joint"
+                mass="${mass_nema17_60}" body_length="${60.0 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 ${-27.950 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
+  </xacro:nema17>
 
   <!--
     NEXT: J2 itself, higher up this T-joint, carrying "J3 J4 - C-Joint".
