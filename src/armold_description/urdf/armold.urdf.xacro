@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<!--
+  Armold — robotic arm by Sweep Dynamics.
+
+  Built base-upward, one joint at a time. Every dimension below was measured
+  directly from the supplied STL geometry rather than assumed; the measurement is
+  cited in a comment beside each value so it can be re-checked.
+
+  UNITS: the STL files are authored in millimetres. URDF is metres, so every mesh
+  carries scale="0.001 0.001 0.001" and every literal here is in metres.
+-->
+<robot name="armold" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================================================================== -->
+  <!-- Conversions and shared properties                                   -->
+  <!-- ================================================================== -->
+
+  <!-- STL authoring units (mm) expressed in metres -->
+  <xacro:property name="mm" value="0.001"/>
+  <xacro:property name="mesh_scale" value="0.001 0.001 0.001"/>
+  <xacro:property name="mesh_dir" value="package://armold_description/meshes"/>
+
+  <!-- ================================================================== -->
+  <!-- Measured geometry: J1 base (Hidden Bolts variant)                   -->
+  <!-- ================================================================== -->
+  <!--
+    Source mesh : J1 - Base Hidden Bolts.stl  (17794 triangles)
+    Measured    : outer cylinder least-squares fit over 1346 rim vertices
+                    centre   (+0.000006, +0.000046) mm  -> 0.05 microns off axis
+                    radius   30.99845 mm   (diameter 61.9969 mm, nominal 62)
+                    rms circularity error 2.63 microns
+                  bbox z     0.000 .. 60.750 mm
+                  top face   annulus, inner bore radius 25.000 mm at z = 60.750
+                  bottom     annulus, outer 30.500 mm at z = 0 (0.5 mm chamfer
+                             rising to full 31.000 mm radius at z = 0.500)
+
+    ORIGIN CONVENTION: the mesh is already centred on its own axis of revolution
+    to within 0.05 microns, and its underside sits exactly on z = 0. So base_link's
+    origin is the centre of the base circle at the mounting plane, with +Z up
+    along the axis of rotation, and the mesh needs NO offset - it is used as-is.
+  -->
+  <xacro:property name="j1_base_radius"     value="${30.99845 * mm}"/>
+  <xacro:property name="j1_base_height"     value="${60.750 * mm}"/>
+  <xacro:property name="j1_base_top_bore_r" value="${25.000 * mm}"/>
+
+  <!--
+    Mass is an ESTIMATE, not a measurement: mesh solid volume 61563.1 mm^3
+    (61.563 cm^3) times PLA density, assuming 100% infill. A printed part is not
+    solid, so replace this with a weighed value before doing any dynamics.
+  -->
+  <xacro:property name="pla_density"    value="1240.0"/>            <!-- kg/m^3 -->
+  <xacro:property name="j1_base_volume" value="61.5631e-6"/>        <!-- m^3    -->
+  <xacro:property name="j1_base_mass"   value="${pla_density * j1_base_volume}"/>
+
+  <!-- ================================================================== -->
+  <!-- Materials                                                           -->
+  <!-- ================================================================== -->
+
+  <material name="armold_black">
+    <color rgba="0.15 0.15 0.17 1.0"/>
+  </material>
+
+  <!-- ================================================================== -->
+  <!-- Links                                                               -->
+  <!-- ================================================================== -->
+
+  <!--
+    world — the fixed ground frame the arm is bolted to.
+
+    Two reasons this exists. Geometrically it is the mounting plane, which is what
+    an arm bolted to a bench actually has. Practically, robot_state_publisher only
+    publishes one transform per joint: a robot that is a single root link has no
+    joints, so TF stays completely empty and RViz reports
+    "Fixed Frame [base_link] does not exist". Anchoring base_link to world with a
+    fixed joint puts world -> base_link on /tf_static, so both frames exist and
+    the warning goes away.
+  -->
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <!-- base_link's frame is the centre of the base circle lying in the mounting
+         plane, so it coincides exactly with world. -->
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!--
+    base_link — the static J1 base. Its frame is the centre of the base circle,
+    lying in the mounting plane, +Z along the axis about which J1 will rotate.
+  -->
+  <link name="base_link">
+
+    <visual>
+      <!-- no offset: the mesh is already authored about this exact frame -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j1_base_hidden_bolts.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_black"/>
+    </visual>
+
+    <!--
+      Collision uses a cylinder primitive rather than the mesh: it matches the
+      measured envelope (r 30.998 mm, h 60.750 mm) and is far cheaper to check
+      than 17794 triangles. Centred at half height because URDF cylinders are
+      centred on their own origin, while the mesh sits on z = 0.
+    -->
+    <collision>
+      <origin xyz="0 0 ${j1_base_height / 2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${j1_base_radius}" length="${j1_base_height}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 ${j1_base_height / 2}" rpy="0 0 0"/>
+      <mass value="${j1_base_mass}"/>
+      <!-- solid-cylinder approximation about the link frame -->
+      <inertia
+        ixx="${j1_base_mass * (3 * j1_base_radius * j1_base_radius + j1_base_height * j1_base_height) / 12}"
+        iyy="${j1_base_mass * (3 * j1_base_radius * j1_base_radius + j1_base_height * j1_base_height) / 12}"
+        izz="${j1_base_mass * j1_base_radius * j1_base_radius / 2}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: J1 revolute joint about +Z, mounted on the top face at
+    z = ${j1_base_height} (60.750 mm), carrying "J1 J5 - Mounting Bracket".
+  -->
+
+</robot>

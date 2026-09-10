@@ -82,6 +82,26 @@ check-urdf:
     xacro src/armold_description/urdf/armold.urdf.xacro > /tmp/armold.urdf
     check_urdf /tmp/armold.urdf
 
+# Copy purchased meshes out of a source folder into the package, normalising
+# names (lowercase, no spaces) so they are safe in URDF package:// paths.
+# Meshes stay git-ignored. Default source is the Sweep Dynamics download folder.
+import-meshes src="~/Downloads/Armold/Print-Ready Orientation":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SRC="{{src}}"
+    DEST=src/armold_description/meshes/visual
+    if [ ! -d "$SRC" ]; then echo "no such folder: $SRC" >&2; exit 1; fi
+    shopt -s nullglob nocaseglob
+    n=0
+    for f in "$SRC"/*.stl; do
+        base="$(basename "$f" .stl)"
+        clean="$(echo "$base" | tr '[:upper:]' '[:lower:]' \
+                 | sed 's/[^a-z0-9]\+/_/g; s/^_//; s/_$//').stl"
+        cp -n "$f" "$DEST/$clean" && echo "  $base -> $clean" || true
+        n=$((n+1))
+    done
+    echo "$n mesh file(s) in $SRC"
+
 # ---------------------------------------------------------------- test -----
 
 # Run the workspace test suite
