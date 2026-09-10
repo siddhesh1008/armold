@@ -362,8 +362,109 @@
     <origin xyz="0 ${-27.950 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
   </xacro:nema17>
 
+  <!-- ================================================================== -->
+  <!-- J2 - shoulder rotation, driven by the 60 mm stepper in the T-joint   -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: J2 itself, higher up this T-joint, carrying "J3 J4 - C-Joint".
+    Source mesh : J3 J4 - C-Joint.stl  (52564 triangles)
+    Measured    : bbox x +/-31.001, y -196.000..31.000, z 0.000..68.500
+                  So in its authored (print) pose it lies on its side: 227 mm
+                  long down -Y, with a collar at the +Y end and a fork at the
+                  far end.
+
+    HOW WE KNOW WHICH END MATES, and which way up:
+      The +Y end carries a collar whose flat faces are
+        z = 6.800 (r 23.255..30.918)   z = 23.000 (r 23.255..26.000)
+        z = 7.050 (r 23.006..24.500)   z = 22.750 (r 23.006..24.500)
+        z = 10.190 (r 24.026..24.486)  z = 12.283 (r 23.006..23.648)
+      Those are the SAME face heights and the SAME radii, to the micron, as the
+      collar on the bottom of J2 - Base T-Joint. It is one standard rotary
+      interface reused: the C-joint seats on the J2 stepper exactly the way the
+      T-joint seats on the J1 stepper.
+
+      The far end (y ~ -165) is the fork: a 31.0 mm square NEMA 17 pattern on the
+      z = 0 face and an 8-hole 56 mm bolt circle on the z = 62 face, facing each
+      other across the C - that is where J3 lives.
+
+    PLACEMENT: by that analogy the collar's z = 0 face seats on the J2 motor
+    plate's OUTER face, measured at y = -36.000 in the T-joint, concentric with
+    the motor at (x = 0, z = 61.000). rpy maps the collar axis (+Z of the mesh)
+    onto -Y, i.e. along the shaft and away from the plate, and puts the arm up
+    +Z. Mesh untouched - the pose is all in the joint.
+  -->
+  <xacro:property name="j2_plate_outer_y" value="${-36.000 * mm}"/>
+  <xacro:property name="j2_axis_z"        value="${61.000 * mm}"/>
+
+  <!--
+    Exact inertia from tetrahedral integration of the mesh, stored per unit mass
+    (same method as the T-joint, validated against a unit cube).
+      centre of mass  (-0.0233, -94.9246, +22.9492) mm in the MESH frame
+    iyy is ~7x smaller than ixx and izz, which is what a long thin arm should
+    look like: little inertia about its own length, lots about the other two.
+  -->
+  <xacro:property name="j3_ixx_per_kg" value="3.612290951e-03"/>
+  <xacro:property name="j3_iyy_per_kg" value="5.026704008e-04"/>
+  <xacro:property name="j3_izz_per_kg" value="3.752252769e-03"/>
+  <xacro:property name="j3_ixy_per_kg" value="-1.821962233e-06"/>
+  <xacro:property name="j3_ixz_per_kg" value="6.683033126e-07"/>
+  <xacro:property name="j3_iyz_per_kg" value="1.688928696e-04"/>
+
+  <!--
+    Revolute about the C-joint's own +Z - the blue axis in RViz - which the rpy
+    above deliberately aligns with the stepper shaft. Working it through:
+      Rx(-90) sends (0,0,1) to (0,1,0), then Rz(180) sends that to (0,-1,0),
+    so the child frame's +Z lands on the T-joint's -Y, which is exactly the
+    direction the J2 motor shaft points. In URDF the axis is expressed in the
+    joint (== child) frame, so plain "0 0 1" is the shaft axis.
+
+    LIMITS ARE PROVISIONAL: +/-180 deg is a placeholder, not a measured or
+    specified value - a real shoulder will hit its own structure long before
+    that. Effort and velocity likewise, until the gearing is known.
+  -->
+  <joint name="J2" type="revolute">
+    <parent link="j2_base_t_joint"/>
+    <child  link="j3_j4_c_joint"/>
+    <origin xyz="0 ${j2_plate_outer_y} ${j2_axis_z}" rpy="${-pi/2} 0 ${pi}"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
+  </joint>
+
+  <link name="j3_j4_c_joint">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_black"/>
+    </visual>
+
+    <!-- mesh collision: a C-shaped arm has no meaningful primitive envelope -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${-0.0233 * mm} ${-94.9246 * mm} ${22.9492 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_j3_j4_c_joint}"/>
+      <inertia
+        ixx="${mass_j3_j4_c_joint * j3_ixx_per_kg}"
+        iyy="${mass_j3_j4_c_joint * j3_iyy_per_kg}"
+        izz="${mass_j3_j4_c_joint * j3_izz_per_kg}"
+        ixy="${mass_j3_j4_c_joint * j3_ixy_per_kg}"
+        ixz="${mass_j3_j4_c_joint * j3_ixz_per_kg}"
+        iyz="${mass_j3_j4_c_joint * j3_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: make J2 revolute about the shaft axis, then J3 in the C-joint's fork.
   -->
 
 </robot>

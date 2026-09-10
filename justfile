@@ -71,9 +71,17 @@ run-simulation gui="true": build
 
     # A stale RViz from a previous run keeps the old robot_description and makes
     # it look like an edit did nothing. Clear any leftovers before launching.
-    for name in rviz2 robot_state_pub joint_state_pub; do
+    # rviz2 and robot_state_publisher are C++ binaries, so -x matches them by
+    # name; joint_state_publisher_gui is a python script, so its process name is
+    # "python3" and only a full-cmdline match finds it. Matching cmdline is safe
+    # here because just runs this recipe from a temp file, so the pattern text is
+    # not in this script's own command line.
+    for name in rviz2 robot_state_pub; do
         pkill -x "$name" 2>/dev/null || true
     done
+    pkill -f joint_state_publisher_gui 2>/dev/null || true
+    pkill -f "ros2 launch armold_description" 2>/dev/null || true
+    sleep 1
 
     echo "launching Armold simulation (gui={{gui}}) — Ctrl-C to stop"
     exec ros2 launch armold_description display.launch.py gui:={{gui}}

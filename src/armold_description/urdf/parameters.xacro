@@ -39,6 +39,12 @@
        entire load the J1 stepper has to accelerate. Weigh it. -->
   <xacro:property name="mass_j2_base_t_joint" value="0.1394"/>
 
+  <!-- [ESTIMATE] J3/J4 C-joint - the upper arm segment, a MOVING link.
+       Mesh solid volume 275 405.6 mm^3 = 275.4056e-6 m^3, x PLA 1240 kg/m^3.
+       227 mm long, so it swings a long lever arm; both its mass and where that
+       mass sits dominate the J2 torque. Weigh it. -->
+  <xacro:property name="mass_j3_j4_c_joint" value="0.3415"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->
