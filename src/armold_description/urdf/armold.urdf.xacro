@@ -125,9 +125,88 @@
 
   </link>
 
+  <!-- ================================================================== -->
+  <!-- J1 stepper mount - STATIC                                           -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: J1 revolute joint about +Z, mounted on the top face at
-    z = ${j1_base_height} (60.750 mm), carrying "J1 J5 - Mounting Bracket".
+    Source mesh : J1 J5 - Mounting Bracket.stl  (11008 triangles)
+    Measured    : outer edge least-squares fit over 374 rim vertices
+                    centre   (+0.000000, -0.000000) mm  -> 0.00 microns off axis
+                    radius   31.00001 mm  (diameter 62.0000)
+                    rms circularity error 0.0 microns  (exact)
+                  bbox z     0.000 .. 8.050 mm  (a flat disc)
+                  underside  flat annulus r 11.750..30.850 at z = 0, and NOTHING
+                             protrudes below z = 0 - so there is no centring
+                             spigot; the disc simply seats on the base top face.
+                  motor      4 holes at (+/-15.500, +/-15.500) mm = a 31.0 mm
+                             square pattern, dia 3.00 mm, counterbored to
+                             6.50 mm at the top face. That is the NEMA 17
+                             bolt pattern (31.04 mm nominal).
+                  8 x dia 2.10 mm holes on a 56 mm bolt circle (r = 28.000)
+
+    PLACEMENT: the bracket's underside is flat and its mesh origin is already on
+    the common axis to 0.00 microns, so it needs no offset of its own. The joint
+    simply lifts it to the base's top face at z = 60.750 mm. Mesh used exactly as
+    authored - the geometry is preserved, only the frame moves.
+
+    THIS PART DOES NOT ROTATE. It is the stepper's mount: it clamps the motor
+    BODY, so it is rigidly part of the static base assembly. The 31.0 mm square
+    hole pattern measured above is what bolts the motor to it. J1's actual
+    rotation is driven by the motor SHAFT, which turns whatever mounts above -
+    so the revolute joint belongs on that next part, not here.
+  -->
+  <xacro:property name="j1_bracket_radius"    value="${31.00001 * mm}"/>
+  <xacro:property name="j1_bracket_thickness" value="${8.050 * mm}"/>
+
+  <!--
+    Fixed, not revolute: the bracket holds the motor body, so it never moves
+    relative to the base.
+  -->
+  <joint name="base_to_j1_mount" type="fixed">
+    <parent link="base_link"/>
+    <child  link="j1_mounting_bracket"/>
+    <origin xyz="0 0 ${j1_base_height}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="j1_mounting_bracket">
+
+    <visual>
+      <!-- mesh authored about this exact frame; used unmodified -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j1_j5_mounting_bracket.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_black"/>
+    </visual>
+
+    <!--
+      A cylinder is not an approximation here: the part is a plain disc, so
+      r = 31.000 mm, h = 8.050 mm IS its exact envelope. Only internal pockets
+      and bolt holes are lost, and those cannot participate in a collision.
+    -->
+    <collision>
+      <origin xyz="0 0 ${j1_bracket_thickness / 2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${j1_bracket_radius}" length="${j1_bracket_thickness}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 ${j1_bracket_thickness / 2}" rpy="0 0 0"/>
+      <mass value="${mass_j1_j5_bracket}"/>
+      <inertia
+        ixx="${mass_j1_j5_bracket * (3 * j1_bracket_radius * j1_bracket_radius + j1_bracket_thickness * j1_bracket_thickness) / 12}"
+        iyy="${mass_j1_j5_bracket * (3 * j1_bracket_radius * j1_bracket_radius + j1_bracket_thickness * j1_bracket_thickness) / 12}"
+        izz="${mass_j1_j5_bracket * j1_bracket_radius * j1_bracket_radius / 2}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: the J1 revolute joint itself - about +Z, driven by the motor shaft,
+    carrying whatever mounts on the shaft above this bracket.
   -->
 
 </robot>

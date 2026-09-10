@@ -27,6 +27,12 @@
        recorded for completeness and for shipping-weight sums only. -->
   <xacro:property name="mass_j1_base" value="0.0763"/>
 
+  <!-- [ESTIMATE] J1/J5 mounting bracket.
+       Mesh solid volume 21 045.9 mm^3 = 21.0459e-6 m^3, x PLA 1240 kg/m^3.
+       Static - it clamps the motor body and is part of the fixed base
+       assembly - so like the base its mass never enters the dynamics. -->
+  <xacro:property name="mass_j1_j5_bracket" value="0.0261"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->
