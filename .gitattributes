@@ -1,0 +1,29 @@
+# Normalize to LF everywhere. Shell scripts and the justfile break outright if a
+# CRLF sneaks in from a Windows checkout.
+* text=auto eol=lf
+
+*.sh      text eol=lf
+justfile  text eol=lf
+*.py      text eol=lf
+
+# Robot description formats are text and should diff normally.
+*.urdf    text
+*.xacro   text
+*.sdf     text
+*.yaml    text
+*.rviz    text
+
+# Meshes and recordings are binary: never diff them, never touch line endings.
+*.stl     binary
+*.STL     binary
+*.ply     binary
+*.blend   binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.bag     binary
+*.mcap    binary
+*.db3     binary
+
+# COLLADA is XML, but mesh diffs are pure noise — keep it text, skip the diff.
+*.dae     text -diff
