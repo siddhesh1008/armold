@@ -80,7 +80,9 @@ Run `just` on its own to list everything.
 | `just rebuild` | Clean, then build from scratch |
 | `just clean` | Remove `build/`, `install/`, `log/` |
 | `just deps` | Resolve ROS dependencies via rosdep |
-| `just rviz` | Build and launch RViz with the arm |
+| `just run-simulation` | **Build and open the sim in RViz** (`gui=false` hides the sliders) |
+| `just rviz` | Alias for `run-simulation` |
+| `just import-meshes` | Copy purchased meshes in, normalising their names |
 | `just urdf` | Print the expanded URDF (fast xacro error check) |
 | `just check-urdf` | Validate the URDF, print the link/joint tree |
 | `just test` | Run the test suite |

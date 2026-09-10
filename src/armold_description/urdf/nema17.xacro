@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+  Reusable NEMA 17 stepper motor.
+
+  Emits a link plus a fixed joint attaching it to `parent`. The body is a box
+  primitive rather than a mesh: a stepper is a rectangular can, so a box IS its
+  true envelope, and it costs 12 triangles instead of thousands.
+
+  FRAME CONVENTION
+    The motor's origin is the centre of its MOUNTING FACE — the face the bolts
+    pass through, where the shaft emerges — with +Z pointing out along the shaft.
+    So the body occupies z in [-body_length, 0] and the shaft sticks out into +Z.
+    That means you place a motor by giving the pose of the surface it bolts to,
+    which is what you actually know from the mating part.
+
+  NEMA 17 standard dimensions (NEMA ICS 16-2001):
+    frame        42.3 x 42.3 mm
+    bolt pattern 31.04 mm square
+    pilot boss   22 mm dia
+    shaft        5 mm dia
+  Only body_length varies between models; 37.5 mm is the J1 motor.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="nema17_frame"   value="0.0423"/>   <!-- 42.3 mm -->
+  <xacro:property name="nema17_shaft_d" value="0.005"/>    <!--  5.0 mm -->
+  <xacro:property name="nema17_shaft_l" value="0.024"/>    <!-- 24.0 mm typical -->
+
+  <material name="motor_steel">
+    <color rgba="0.32 0.33 0.36 1.0"/>
+  </material>
+
+  <!--
+    name         link name to create
+    parent       link to attach to
+    mass         kg — from the mass table in parameters.xacro
+    body_length  m  — motor can length, excluding the shaft
+    visual       draw the motor body? off by default: on a real build the motor
+                 is usually hidden inside a printed shell, so the triangles are
+                 wasted. Turn on for renders or clearance checks.
+    shaft        draw/collide the output shaft as well
+    *origin      block parameter: pose of the mounting face in `parent`'s frame
+  -->
+  <xacro:macro name="nema17"
+               params="name parent mass body_length visual:=false shaft:=false *origin">
+
+    <joint name="${name}_mount" type="fixed">
+      <parent link="${parent}"/>
+      <child  link="${name}"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <link name="${name}">
+
+      <xacro:if value="${visual}">
+        <visual>
+          <origin xyz="0 0 ${-body_length/2}" rpy="0 0 0"/>
+          <geometry>
+            <box size="${nema17_frame} ${nema17_frame} ${body_length}"/>
+          </geometry>
+          <material name="motor_steel"/>
+        </visual>
+        <xacro:if value="${shaft}">
+          <visual>
+            <origin xyz="0 0 ${nema17_shaft_l/2}" rpy="0 0 0"/>
+            <geometry>
+              <cylinder radius="${nema17_shaft_d/2}" length="${nema17_shaft_l}"/>
+            </geometry>
+            <material name="motor_steel"/>
+          </visual>
+        </xacro:if>
+      </xacro:if>
+
+      <collision>
+        <origin xyz="0 0 ${-body_length/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${nema17_frame} ${nema17_frame} ${body_length}"/>
+        </geometry>
+      </collision>
+
+      <!--
+        Solid-box inertia about the body centre. A stepper is not homogeneous —
+        the stator iron and windings sit at the outside — so the true Izz is
+        somewhat higher than this. Good enough for gravity compensation and
+        reach planning; revisit if you do high-speed trajectory optimisation.
+      -->
+      <inertial>
+        <origin xyz="0 0 ${-body_length/2}" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${mass * (nema17_frame*nema17_frame + body_length*body_length) / 12}"
+          iyy="${mass * (nema17_frame*nema17_frame + body_length*body_length) / 12}"
+          izz="${mass * (nema17_frame*nema17_frame + nema17_frame*nema17_frame) / 12}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+
+    </link>
+
+  </xacro:macro>
+
+</robot>

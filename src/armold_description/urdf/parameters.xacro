@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+  Armold — central parameter table.
+
+  ============================ MASS TABLE ============================
+  Every mass in the model lives here, so there is exactly one place to edit as
+  parts get weighed. Each entry carries a tag:
+
+    [MEASURED]  weighed on a scale — trustworthy.
+    [ESTIMATE]  derived from mesh volume x material density at 100% infill.
+                A printed part is NOT solid, so these read HIGH — typically by
+                40-70% at normal infill. Treat as an upper bound only.
+
+  When you weigh a part, replace the value and change its tag to [MEASURED].
+  Nothing else in the model needs touching.
+  ====================================================================
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================================================================ -->
+  <!-- Printed structural parts                                          -->
+  <!-- ================================================================ -->
+
+  <!-- [ESTIMATE] J1 base, Hidden Bolts variant.
+       Mesh solid volume 61 563.1 mm^3 = 61.5631e-6 m^3, x PLA 1240 kg/m^3.
+       Bolted to the world, so this mass never affects the dynamics — it is
+       recorded for completeness and for shipping-weight sums only. -->
+  <xacro:property name="mass_j1_base" value="0.0763"/>
+
+  <!-- ================================================================ -->
+  <!-- Motors                                                            -->
+  <!-- ================================================================ -->
+
+  <!-- [ESTIMATE] NEMA 17, 37.5 mm body — the J1 motor.
+       Catalogue figures for this body length span roughly 0.22-0.28 kg, so this
+       midpoint could be off by +/-12%. On a moving link the motor dominates link
+       inertia, so WEIGH ONE and replace this before trusting any dynamics. -->
+  <xacro:property name="mass_nema17_37_5" value="0.250"/>
+
+  <!-- ================================================================ -->
+  <!-- Material densities (for volume-based estimates)                   -->
+  <!-- ================================================================ -->
+  <xacro:property name="density_pla"  value="1240.0"/>   <!-- kg/m^3 -->
+  <xacro:property name="density_petg" value="1270.0"/>   <!-- kg/m^3 -->
+
+</robot>

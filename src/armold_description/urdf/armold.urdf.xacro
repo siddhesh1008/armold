@@ -11,6 +11,10 @@
 -->
 <robot name="armold" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- Mass table (edit masses there, not here) and reusable components -->
+  <xacro:include filename="$(find armold_description)/urdf/parameters.xacro"/>
+  <xacro:include filename="$(find armold_description)/urdf/nema17.xacro"/>
+
   <!-- ================================================================== -->
   <!-- Conversions and shared properties                                   -->
   <!-- ================================================================== -->
@@ -43,14 +47,8 @@
   <xacro:property name="j1_base_height"     value="${60.750 * mm}"/>
   <xacro:property name="j1_base_top_bore_r" value="${25.000 * mm}"/>
 
-  <!--
-    Mass is an ESTIMATE, not a measurement: mesh solid volume 61563.1 mm^3
-    (61.563 cm^3) times PLA density, assuming 100% infill. A printed part is not
-    solid, so replace this with a weighed value before doing any dynamics.
-  -->
-  <xacro:property name="pla_density"    value="1240.0"/>            <!-- kg/m^3 -->
-  <xacro:property name="j1_base_volume" value="61.5631e-6"/>        <!-- m^3    -->
-  <xacro:property name="j1_base_mass"   value="${pla_density * j1_base_volume}"/>
+  <!-- Mass lives in the table in parameters.xacro -->
+  <xacro:property name="j1_base_mass" value="${mass_j1_base}"/>
 
   <!-- ================================================================== -->
   <!-- Materials                                                           -->

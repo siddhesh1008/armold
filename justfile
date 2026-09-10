@@ -55,17 +55,31 @@ rebuild: clean build
 
 # ---------------------------------------------------------------- run ------
 
-# Launch RViz with the Armold model and joint sliders
-rviz: build
+# Build and open the Armold simulation in RViz (gui=false hides the sliders)
+run-simulation gui="true": build
     #!/usr/bin/env bash
     set -euo pipefail
     source ./setup_env.sh
-    if ros2 pkg prefix armold_description >/dev/null 2>&1; then
-        ros2 launch armold_description display.launch.py
-    else
-        echo "armold_description not built yet — opening a bare RViz session."
-        rviz2
+    #   just run-simulation             sliders on (default)
+    #   just run-simulation gui=false   no slider window
+
+    if ! ros2 pkg prefix armold_description >/dev/null 2>&1; then
+        echo "armold_description is not on the ROS package path." >&2
+        echo "Try: just rebuild" >&2
+        exit 1
     fi
+
+    # A stale RViz from a previous run keeps the old robot_description and makes
+    # it look like an edit did nothing. Clear any leftovers before launching.
+    for name in rviz2 robot_state_pub joint_state_pub; do
+        pkill -x "$name" 2>/dev/null || true
+    done
+
+    echo "launching Armold simulation (gui={{gui}}) — Ctrl-C to stop"
+    exec ros2 launch armold_description display.launch.py gui:={{gui}}
+
+# `just rviz` still works and does the same thing.
+alias rviz := run-simulation
 
 # Print the parsed URDF (catches xacro errors fast)
 urdf:
@@ -82,12 +96,12 @@ check-urdf:
     xacro src/armold_description/urdf/armold.urdf.xacro > /tmp/armold.urdf
     check_urdf /tmp/armold.urdf
 
-# Copy purchased meshes out of a source folder into the package, normalising
-# names (lowercase, no spaces) so they are safe in URDF package:// paths.
-# Meshes stay git-ignored. Default source is the Sweep Dynamics download folder.
+# Copy purchased meshes into the package, normalising names for package:// paths
 import-meshes src="~/Downloads/Armold/Print-Ready Orientation":
     #!/usr/bin/env bash
     set -euo pipefail
+    # Names are lowercased and spaces become underscores, because spaces in a
+    # package:// URI break URDF parsing. Meshes stay git-ignored either way.
     SRC="{{src}}"
     DEST=src/armold_description/meshes/visual
     if [ ! -d "$SRC" ]; then echo "no such folder: $SRC" >&2; exit 1; fi
