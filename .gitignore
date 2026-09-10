@@ -25,3 +25,31 @@ __pycache__/
 *.swp
 *~
 .DS_Store
+
+# ---- proprietary geometry (Sweep Dynamics) ----
+# Armold's mesh and CAD files are a paid design and must never be committed.
+# The folders under src/armold_description/meshes/ are kept via .gitkeep; the
+# geometry itself stays local. If a file here is genuinely shareable, add it
+# deliberately with `git add -f`.
+*.stl
+*.STL
+*.dae
+*.obj
+*.ply
+*.fbx
+*.glb
+*.gltf
+*.3mf
+*.step
+*.stp
+*.STEP
+*.iges
+*.igs
+*.x_t
+*.x_b
+*.sldprt
+*.sldasm
+*.ipt
+*.iam
+*.f3d
+*.f3z
