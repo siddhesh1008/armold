@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+  J3/J4 C-Joint - the reusable arm segment.
+
+  Armold uses this identical part twice: once driven by J2 (hosting J3 in its
+  fork) and once driven by J3 (hosting J4). Emitting both from one macro means
+  the geometry, mass and inertia can never drift apart between instances.
+
+  The mesh is used exactly as authored - no scale beyond mm->m, no offset, no
+  baked-in rotation. Every instance differs only by the joint that positions it.
+
+  MEASURED (see armold.urdf.xacro for the full derivation):
+    collar end (+Y)   the standard rotary seat, face heights and radii identical
+                      to the T-joint's collar
+    fork end (y=-165) bottom arm z 0..8.050 is the mounting-bracket interface
+                      MIRRORED: dia 23 pilot recess at z 6..8.050, dia 13 shaft
+                      bore below it, collar seat face at z = 0 whose radii
+                      (6.750..30.500) match the bracket's top face exactly
+    top arm           z 62..68.500, the base-top interface
+
+  Inertia is exact: tetrahedral integration over the mesh, stored per unit mass
+  so replacing the estimated mass rescales it correctly.
+    volume 275 405.6 mm^3     com (-0.0233, -94.9246, +22.9492) mm
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="c_ixx_per_kg" value="3.612290951e-03"/>
+  <xacro:property name="c_iyy_per_kg" value="5.026704008e-04"/>
+  <xacro:property name="c_izz_per_kg" value="3.752252769e-03"/>
+  <xacro:property name="c_ixy_per_kg" value="-1.821962233e-06"/>
+  <xacro:property name="c_ixz_per_kg" value="6.683033126e-07"/>
+  <xacro:property name="c_iyz_per_kg" value="1.688928696e-04"/>
+
+  <!-- geometry of the fork end, in the mesh's own frame -->
+  <xacro:property name="c_fork_axis_y"    value="${-165.000 * mm}"/>  <!-- J3/J4 axis -->
+  <xacro:property name="c_fork_seat_z"    value="${0.000 * mm}"/>     <!-- collar seat face -->
+  <xacro:property name="c_fork_motor_z"   value="${8.050 * mm}"/>     <!-- motor mounting face -->
+
+  <!--
+    name    link name to create
+    mass    kg, from the mass table
+    Creates only the link; the caller supplies the joint that places it.
+  -->
+  <xacro:macro name="c_joint_link" params="name mass">
+    <link name="${name}">
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl" scale="${mesh_scale}"/>
+        </geometry>
+        <material name="armold_black"/>
+      </visual>
+
+      <!-- mesh collision: a C-shaped arm has no meaningful primitive envelope -->
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl" scale="${mesh_scale}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="${-0.0233 * mm} ${-94.9246 * mm} ${22.9492 * mm}" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${mass * c_ixx_per_kg}" iyy="${mass * c_iyy_per_kg}"
+          izz="${mass * c_izz_per_kg}" ixy="${mass * c_ixy_per_kg}"
+          ixz="${mass * c_ixz_per_kg}" iyz="${mass * c_iyz_per_kg}"/>
+      </inertial>
+
+    </link>
+  </xacro:macro>
+
+</robot>

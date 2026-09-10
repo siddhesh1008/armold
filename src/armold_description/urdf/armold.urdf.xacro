@@ -14,6 +14,7 @@
   <!-- Mass table (edit masses there, not here) and reusable components -->
   <xacro:include filename="$(find armold_description)/urdf/parameters.xacro"/>
   <xacro:include filename="$(find armold_description)/urdf/nema17.xacro"/>
+  <xacro:include filename="$(find armold_description)/urdf/c_joint.xacro"/>
 
   <!-- ================================================================== -->
   <!-- Conversions and shared properties                                   -->
@@ -395,19 +396,7 @@
   <xacro:property name="j2_plate_outer_y" value="${-36.000 * mm}"/>
   <xacro:property name="j2_axis_z"        value="${61.000 * mm}"/>
 
-  <!--
-    Exact inertia from tetrahedral integration of the mesh, stored per unit mass
-    (same method as the T-joint, validated against a unit cube).
-      centre of mass  (-0.0233, -94.9246, +22.9492) mm in the MESH frame
-    iyy is ~7x smaller than ixx and izz, which is what a long thin arm should
-    look like: little inertia about its own length, lots about the other two.
-  -->
-  <xacro:property name="j3_ixx_per_kg" value="3.612290951e-03"/>
-  <xacro:property name="j3_iyy_per_kg" value="5.026704008e-04"/>
-  <xacro:property name="j3_izz_per_kg" value="3.752252769e-03"/>
-  <xacro:property name="j3_ixy_per_kg" value="-1.821962233e-06"/>
-  <xacro:property name="j3_ixz_per_kg" value="6.683033126e-07"/>
-  <xacro:property name="j3_iyz_per_kg" value="1.688928696e-04"/>
+  <!-- geometry, mass distribution and inertia all live in c_joint.xacro -->
 
   <!--
     Revolute about the C-joint's own +Z - the blue axis in RViz - which the rpy
@@ -429,42 +418,65 @@
     <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
   </joint>
 
-  <link name="j3_j4_c_joint">
+  <xacro:c_joint_link name="j3_j4_c_joint" mass="${mass_j3_j4_c_joint}"/>
 
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl"
-              scale="${mesh_scale}"/>
-      </geometry>
-      <material name="armold_black"/>
-    </visual>
+  <!-- ================================================================== -->
+  <!-- J3 - elbow, in the first C-joint's fork                              -->
+  <!-- ================================================================== -->
+  <!--
+    The fork's bottom arm is the J1 mounting bracket's interface MIRRORED. Laid
+    side by side, in each part's own frame:
 
-    <!-- mesh collision: a C-shaped arm has no meaningful primitive envelope -->
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl"
-              scale="${mesh_scale}"/>
-      </geometry>
-    </collision>
+        bracket                        C-joint fork
+        z = 0     motor face,          z = 8.050  motor face,
+                  dia 23 pilot recess             dia 23 pilot recess (z 6..8.05)
+        z = 3.0   dia 13 shaft bore    z = 0..6   dia 13 shaft bore
+        z = 8.050 collar seat face,    z = 0      collar seat face,
+                  r 6.750..30.500                 r 6.750..30.500
 
-    <inertial>
-      <origin xyz="${-0.0233 * mm} ${-94.9246 * mm} ${22.9492 * mm}" rpy="0 0 0"/>
-      <mass value="${mass_j3_j4_c_joint}"/>
-      <inertia
-        ixx="${mass_j3_j4_c_joint * j3_ixx_per_kg}"
-        iyy="${mass_j3_j4_c_joint * j3_iyy_per_kg}"
-        izz="${mass_j3_j4_c_joint * j3_izz_per_kg}"
-        ixy="${mass_j3_j4_c_joint * j3_ixy_per_kg}"
-        ixz="${mass_j3_j4_c_joint * j3_ixz_per_kg}"
-        iyz="${mass_j3_j4_c_joint * j3_iyz_per_kg}"/>
-    </inertial>
-
-  </link>
+    Same numbers, opposite order. So the J3 stepper mounts against z = 8.050 with
+    its body reaching UP into the fork's gap, its shaft pointing DOWN, and the
+    next segment's collar seats on the z = 0 face - exactly how the T-joint seats
+    on the bracket at J1.
+  -->
 
   <!--
-    NEXT: make J2 revolute about the shaft axis, then J3 in the C-joint's fork.
+    Motor: rpy = (pi, 0, 0) turns the macro's +Z (the shaft) onto the parent's
+    -Z, which is where the shaft points; the body then extends along the parent's
+    +Z, up into the gap between the fork's two arms.
+  -->
+  <xacro:nema17 name="j3_motor" parent="j3_j4_c_joint"
+                mass="${mass_nema17_37_5}" body_length="${37.5 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 ${c_fork_axis_y} ${c_fork_motor_z}" rpy="${pi} 0 0"/>
+  </xacro:nema17>
+
+  <!--
+    J3 itself. rpy = (pi, 0, pi) composes to diag(-1, 1, -1), which sends the
+    child's +Z onto the parent's -Z - so the second segment's collar seats on the
+    z = 0 face and extends downward away from it, and its arm carries on in the
+    parent's -Y rather than folding back. As with J1 and J2 the axis is the
+    child's own +Z, the blue axis in RViz.
+
+    Because J3's axis is the parent's Z and J2's axis was also a Z of this same
+    link, J2 and J3 come out parallel - which is what a shoulder and elbow in a
+    planar arm should be, and a useful check that the chain is right.
+
+    LIMITS ARE PROVISIONAL: +/-180 deg placeholder, as for J1 and J2.
+  -->
+  <joint name="J3" type="revolute">
+    <parent link="j3_j4_c_joint"/>
+    <child  link="j3_j4_c_joint_2"/>
+    <origin xyz="0 ${c_fork_axis_y} ${c_fork_seat_z}" rpy="${pi} 0 ${pi}"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
+  </joint>
+
+  <!-- the same part again - identical geometry, mass and inertia by construction -->
+  <xacro:c_joint_link name="j3_j4_c_joint_2" mass="${mass_j3_j4_c_joint}"/>
+
+  <!--
+    NEXT: J4 in the second C-joint's fork, then J5.
   -->
 
 </robot>
