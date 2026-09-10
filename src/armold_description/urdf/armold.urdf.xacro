@@ -204,9 +204,104 @@
 
   </link>
 
+  <!-- ================================================================== -->
+  <!-- J1 - base rotation about +Z, driven by the stepper shaft             -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: the J1 revolute joint itself - about +Z, driven by the motor shaft,
-    carrying whatever mounts on the shaft above this bracket.
+    Source mesh : J2 - Base T-Joint.stl  (36114 triangles)
+    Measured    : the lower section is a stack of cylinders, every one of them
+                  concentric with the mesh Z axis to 0.0 microns:
+                    z  0.0- 2.0   outer r 31.0000  centre (+0.0000,+0.0000)
+                    z  6.0-12.0   outer r 26.0000  centre (+0.0000,+0.0000)
+                    z 12.0-20.0   outer r 24.4646  centre (-0.0000,-0.0000)
+                  bottom face z=0: annulus r 26.500..30.500, centre (0,0),
+                                   circularity rms 0.0 microns
+                  bbox        x +/-31.000, y -36.000..46.800, z 0..92.000
+                              (asymmetric in Y - that is the T arm)
+
+    PLACEMENT: the bottom annulus (r 26.500..30.500) seats on the bracket's top
+    face (r 6.750..30.500) - the two rings coincide, so this simply stacks. The
+    mesh's own axis of revolution is already the rotation axis, so once again the
+    mesh is used exactly as authored with no offset or rotation of its own.
+
+    This is the first link that MOVES: the stepper's shaft turns it about +Z,
+    while the mount below holds the motor body still.
+  -->
+  <xacro:property name="j2_t_joint_seat_r_min" value="${26.500 * mm}"/>
+  <xacro:property name="j2_t_joint_seat_r_max" value="${30.500 * mm}"/>
+
+  <!--
+    Inertia below is EXACT for the geometry, not a primitive approximation.
+    Computed by decomposing the mesh into tetrahedra and integrating the second
+    moment over the solid (validated against a unit cube to 6 decimal places).
+    Stored per unit mass, so the numbers stay correct when the estimated mass is
+    replaced by a weighed one - only the scale changes, never the shape.
+      centre of mass  (-0.3871, -1.7634, +48.8911) mm
+    The off-diagonal terms are small but real (up to 1.8% of the largest
+    diagonal); they come from the arm being offset in Y, so they are kept.
+  -->
+  <xacro:property name="j2_ixx_per_kg" value="1.332202753e-03"/>
+  <xacro:property name="j2_iyy_per_kg" value="1.142624054e-03"/>
+  <xacro:property name="j2_izz_per_kg" value="9.905486229e-04"/>
+  <xacro:property name="j2_ixy_per_kg" value="1.270531800e-05"/>
+  <xacro:property name="j2_ixz_per_kg" value="4.093846446e-06"/>
+  <xacro:property name="j2_iyz_per_kg" value="2.374568760e-05"/>
+
+  <!--
+    LIMITS ARE PROVISIONAL: +/-180 deg is a placeholder, not a measured or
+    specified value. Effort and velocity likewise, until the gearing is known.
+  -->
+  <joint name="J1" type="revolute">
+    <parent link="j1_mounting_bracket"/>
+    <child  link="j2_base_t_joint"/>
+    <!-- the bracket's top face, i.e. its own thickness above its frame -->
+    <origin xyz="0 0 ${j1_bracket_thickness}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
+  </joint>
+
+  <link name="j2_base_t_joint">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j2_base_t_joint.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_black"/>
+    </visual>
+
+    <!--
+      The mesh itself is used for collision. This part is a T, not a solid of
+      revolution, so no primitive is its true envelope and substituting one would
+      throw away exactly the geometry we are trying to preserve. It costs 36114
+      triangles; if collision checking ever gets slow, put a decimated hull in
+      meshes/collision/ and point this at it instead.
+    -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j2_base_t_joint.stl"
+              scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${-0.3871 * mm} ${-1.7634 * mm} ${48.8911 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_j2_base_t_joint}"/>
+      <inertia
+        ixx="${mass_j2_base_t_joint * j2_ixx_per_kg}"
+        iyy="${mass_j2_base_t_joint * j2_iyy_per_kg}"
+        izz="${mass_j2_base_t_joint * j2_izz_per_kg}"
+        ixy="${mass_j2_base_t_joint * j2_ixy_per_kg}"
+        ixz="${mass_j2_base_t_joint * j2_ixz_per_kg}"
+        iyz="${mass_j2_base_t_joint * j2_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: J2 itself, higher up this T-joint, carrying "J3 J4 - C-Joint".
   -->
 
 </robot>

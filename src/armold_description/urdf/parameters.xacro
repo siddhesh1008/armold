@@ -33,6 +33,12 @@
        assembly - so like the base its mass never enters the dynamics. -->
   <xacro:property name="mass_j1_j5_bracket" value="0.0261"/>
 
+  <!-- [ESTIMATE] J2 base T-joint - the first MOVING link.
+       Mesh solid volume 112 430.4 mm^3 = 112.4304e-6 m^3, x PLA 1240 kg/m^3.
+       This one rotates, so its mass and inertia genuinely matter: it is the
+       entire load the J1 stepper has to accelerate. Weigh it. -->
+  <xacro:property name="mass_j2_base_t_joint" value="0.1394"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->
