@@ -56,6 +56,10 @@
        Mesh solid volume 98 894.2 mm^3 = 98.8942e-6 m^3, x PLA 1240 kg/m^3. -->
   <xacro:property name="mass_j6_top_t_joint" value="0.1226"/>
 
+  <!-- [ESTIMATE] Gripper connection - the hub that press-fits on the J6 shaft
+       and carries the gripper. Mesh solid volume 58 763.0 mm^3, x PLA 1240. -->
+  <xacro:property name="mass_gripper_connection" value="0.0729"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->

@@ -690,9 +690,82 @@
     <origin xyz="0 ${-27.950 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
   </xacro:nema17>
 
+  <!-- ================================================================== -->
+  <!-- J6 - carries the gripper connection. STATIC FOR NOW.                 -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: J6 itself - the rotation this motor drives - and the Micro Gripper
-    MK II that mounts on it.
+    Source mesh : Gripper - Connection.stl  (27357 triangles)
+    Measured    : bbox x +/-31.000, y +/-31.000, z 0.005..31.905
+                  bottom face z = 0.005: outer edge fits a circle centred
+                  (-0.00000, +0.00000), r = 30.5000, rms 0.0 microns
+                  central bore dia 4.15..4.74 running z 0..18 - not round: the
+                  radius drops to 2.075 on one side and sits at ~2.37 elsewhere,
+                  which is a D-bore for the NEMA 17's dia 5 flatted shaft.
+
+    HOW IT MOUNTS: unlike the arm segments this part has no rotary collar. It is
+    a hub that press-fits straight onto the J6 motor's shaft, with its z = 0.005
+    face against the top T-joint's motor plate. Those two mate exactly: the
+    plate's outer face at y = -36.000 spans x +/-30.50 and z 30.50..91.50, i.e. a
+    r = 30.5 circle about (x 0, z 61.000) - the same circle this part's bottom
+    face fits to 0.0 microns.
+
+    rpy = (pi/2, 0, 0) turns the hub's +Z onto the T-joint's -Y, which is the
+    direction the J6 shaft points, so the hub runs outward from the plate.
+
+    The part's own bottom sits at z = 0.005 rather than 0, so it stands 5 microns
+    off the plate. That is below the mesh's own precision and is left as authored
+    rather than nudged - the geometry is maintained exactly.
+
+    FIXED for now, by request. The origin below is already the axis of rotation,
+    so J6's motion is a type change plus an axis and limit.
+  -->
+  <joint name="J6" type="fixed">
+    <parent link="j6_top_t_joint"/>
+    <child  link="gripper_connection"/>
+    <origin xyz="0 ${-36.000 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
+  </joint>
+
+  <!--
+    Exact inertia, tetrahedral integration, per unit mass.
+      centre of mass (+0.4702, +0.0977, +11.3558) mm in the mesh frame
+  -->
+  <xacro:property name="gc_ixx_per_kg" value="2.854420869e-04"/>
+  <xacro:property name="gc_iyy_per_kg" value="3.005431716e-04"/>
+  <xacro:property name="gc_izz_per_kg" value="4.641025920e-04"/>
+  <xacro:property name="gc_ixy_per_kg" value="2.735988350e-08"/>
+  <xacro:property name="gc_ixz_per_kg" value="-6.061291888e-06"/>
+  <xacro:property name="gc_iyz_per_kg" value="7.227527713e-07"/>
+
+  <link name="gripper_connection">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/gripper_connection.stl" scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/gripper_connection.stl" scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${0.4702 * mm} ${0.0977 * mm} ${11.3558 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_gripper_connection}"/>
+      <inertia
+        ixx="${mass_gripper_connection * gc_ixx_per_kg}" iyy="${mass_gripper_connection * gc_iyy_per_kg}"
+        izz="${mass_gripper_connection * gc_izz_per_kg}" ixy="${mass_gripper_connection * gc_ixy_per_kg}"
+        ixz="${mass_gripper_connection * gc_ixz_per_kg}" iyz="${mass_gripper_connection * gc_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: make J6 revolute, then the rest of the gripper.
   -->
 
 </robot>
