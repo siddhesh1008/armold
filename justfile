@@ -148,7 +148,18 @@ import-meshes src="~/Downloads/Armold/Print-Ready Orientation":
         base="$(basename "$f" .stl)"
         clean="$(echo "$base" | tr '[:upper:]' '[:lower:]' \
                  | sed 's/[^a-z0-9]\+/_/g; s/^_//; s/_$//').stl"
-        cp -n "$f" "$DEST/$clean" && echo "  $base -> $clean" || true
+        # Parts whose file name covers two joints get one copy per joint, named
+        # for that joint. The C-joint ships once but Armold uses it at J3 and at
+        # J4, and a link called j3_j4_c_joint_2 is unreadable in a TF tree.
+        case "$clean" in
+            j3_j4_c_joint.stl)
+                cp -n "$f" "$DEST/j3_c_joint.stl" && echo "  $base -> j3_c_joint.stl" || true
+                cp -n "$f" "$DEST/j4_c_joint.stl" && echo "  $base -> j4_c_joint.stl" || true
+                ;;
+            *)
+                cp -n "$f" "$DEST/$clean" && echo "  $base -> $clean" || true
+                ;;
+        esac
         n=$((n+1))
     done
     echo "$n mesh file(s) in $SRC"

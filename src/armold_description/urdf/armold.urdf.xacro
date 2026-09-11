@@ -421,13 +421,14 @@
   -->
   <joint name="J2" type="revolute">
     <parent link="j2_base_t_joint"/>
-    <child  link="j3_j4_c_joint"/>
+    <child  link="j3_c_joint"/>
     <origin xyz="0 ${j2_plate_outer_y} ${j2_axis_z}" rpy="${-pi/2} 0 ${pi}"/>
     <axis xyz="0 0 1"/>
     <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
   </joint>
 
-  <xacro:c_joint_link name="j3_j4_c_joint" mass="${mass_j3_j4_c_joint}"/>
+  <xacro:c_joint_link name="j3_c_joint" mesh="j3_c_joint.stl"
+                      mass="${mass_c_joint}"/>
 
   <!-- ================================================================== -->
   <!-- J3 - elbow, in the first C-joint's fork                              -->
@@ -454,7 +455,7 @@
     -Z, which is where the shaft points; the body then extends along the parent's
     +Z, up into the gap between the fork's two arms.
   -->
-  <xacro:nema17 name="j3_motor" parent="j3_j4_c_joint"
+  <xacro:nema17 name="j3_motor" parent="j3_c_joint"
                 mass="${mass_nema17_37_5}" body_length="${37.5 * mm}"
                 visual="true" shaft="true">
     <origin xyz="0 ${c_fork_axis_y} ${c_fork_motor_z}" rpy="${pi} 0 0"/>
@@ -474,18 +475,35 @@
     LIMITS ARE PROVISIONAL: +/-180 deg placeholder, as for J1 and J2.
   -->
   <joint name="J3" type="revolute">
-    <parent link="j3_j4_c_joint"/>
-    <child  link="j3_j4_c_joint_2"/>
+    <parent link="j3_c_joint"/>
+    <child  link="j4_c_joint"/>
     <origin xyz="0 ${c_fork_axis_y} ${c_fork_seat_z}" rpy="${pi} 0 ${pi}"/>
     <axis xyz="0 0 1"/>
     <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
   </joint>
 
   <!-- the same part again - identical geometry, mass and inertia by construction -->
-  <xacro:c_joint_link name="j3_j4_c_joint_2" mass="${mass_j3_j4_c_joint}"/>
+  <xacro:c_joint_link name="j4_c_joint" mesh="j4_c_joint.stl"
+                      mass="${mass_c_joint}"/>
+
+  <!-- ================================================================== -->
+  <!-- J4 motor - in the second C-joint's fork                              -->
+  <!-- ================================================================== -->
+  <!--
+    Identical part, so identical mounting geometry: face at z = 8.050 with the
+    dia 23 pilot recess above it, body reaching up into the fork gap, shaft
+    pointing down through the dia 13 bore to the collar seat at z = 0. The
+    constants come from c_joint.xacro, so this needs no new measurements - if
+    that interface is ever re-measured, J3 and J4 both follow automatically.
+  -->
+  <xacro:nema17 name="j4_motor" parent="j4_c_joint"
+                mass="${mass_nema17_37_5}" body_length="${37.5 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 ${c_fork_axis_y} ${c_fork_motor_z}" rpy="${pi} 0 0"/>
+  </xacro:nema17>
 
   <!--
-    NEXT: J4 in the second C-joint's fork, then J5.
+    NEXT: J4 itself, then J5.
   -->
 
 </robot>

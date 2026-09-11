@@ -2,9 +2,14 @@
 <!--
   J3/J4 C-Joint - the reusable arm segment.
 
-  Armold uses this identical part twice: once driven by J2 (hosting J3 in its
-  fork) and once driven by J3 (hosting J4). Emitting both from one macro means
-  the geometry, mass and inertia can never drift apart between instances.
+  Armold uses this identical part twice: once hosting J3's motor in its fork and
+  once hosting J4's. Emitting both from one macro means the geometry, mass and
+  inertia can never drift apart between instances.
+
+  The two instances point at separate mesh files - j3_c_joint.stl and
+  j4_c_joint.stl - which are byte-identical copies of the one supplied part. The
+  duplication is deliberate: naming each file for the joint it serves keeps the
+  model readable, and the meshes are git-ignored so it costs nothing in the repo.
 
   The mesh is used exactly as authored - no scale beyond mm->m, no offset, no
   baked-in rotation. Every instance differs only by the joint that positions it.
@@ -38,16 +43,17 @@
 
   <!--
     name    link name to create
+    mesh    file name inside meshes/visual (j3_c_joint.stl or j4_c_joint.stl)
     mass    kg, from the mass table
     Creates only the link; the caller supplies the joint that places it.
   -->
-  <xacro:macro name="c_joint_link" params="name mass">
+  <xacro:macro name="c_joint_link" params="name mesh mass">
     <link name="${name}">
 
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl" scale="${mesh_scale}"/>
+          <mesh filename="${mesh_dir}/visual/${mesh}" scale="${mesh_scale}"/>
         </geometry>
         <material name="armold_grey"/>
       </visual>
@@ -56,7 +62,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl" scale="${mesh_scale}"/>
+          <mesh filename="${mesh_dir}/visual/${mesh}" scale="${mesh_scale}"/>
         </geometry>
       </collision>
 
