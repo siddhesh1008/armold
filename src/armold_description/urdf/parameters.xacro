@@ -51,6 +51,11 @@
        anything so far - it matters to J2 and J3 more than to J4. Weigh it. -->
   <xacro:property name="mass_j5_j_joint" value="0.1130"/>
 
+  <!-- [ESTIMATE] J6 top T-joint - the wrist body, a MOVING link and the last
+       structural part before the gripper.
+       Mesh solid volume 98 894.2 mm^3 = 98.8942e-6 m^3, x PLA 1240 kg/m^3. -->
+  <xacro:property name="mass_j6_top_t_joint" value="0.1226"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->

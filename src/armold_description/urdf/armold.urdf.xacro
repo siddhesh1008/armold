@@ -594,8 +594,76 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:nema17>
 
+  <!-- ================================================================== -->
+  <!-- J5 - wrist roll, driven by the 23 mm stepper in the J5 bracket       -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: J5 itself, then J6 - Top T-Joint, then the gripper.
+    Source mesh : J6 - Top T-Joint.stl  (39832 triangles)
+    Measured    : bbox x +/-31.000, y -36.000..33.500, z 0.000..92.000
+                  bottom face z = 0: annulus r 26.500..30.500, outer edge fits a
+                  circle centred (-0.00000, +0.00000) with rms 0.0 microns
+                  collar faces z = 6.800 / 7.050 / 10.190 / 12.283 / 13.330 /
+                                 16.470 / 22.750 / 23.000
+
+    Those collar faces and radii are IDENTICAL to J2 - Base T-Joint's, so this
+    part seats on the J5 bracket exactly as the base T-joint seats on the J1
+    bracket: its z = 0 annulus on the bracket's z = 8.050 collar seat, turned by
+    the shaft coming up through the bracket. Same interface, same placement,
+    same axis - no new derivation, and the mesh is used exactly as authored.
+
+    LIMITS ARE PROVISIONAL: +/-180 deg placeholder, as for J1-J4.
+  -->
+  <joint name="J5" type="revolute">
+    <parent link="j5_mounting_bracket"/>
+    <child  link="j6_top_t_joint"/>
+    <origin xyz="0 0 ${brk_seat_z}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
+  </joint>
+
+  <!--
+    Exact inertia, tetrahedral integration over the mesh, per unit mass.
+      centre of mass (+0.7584, -5.6073, +47.3052) mm in the mesh frame
+    The off-diagonals are larger here than on the other parts because the T arm
+    is offset in both X and Y; they are kept rather than zeroed.
+  -->
+  <xacro:property name="j6_ixx_per_kg" value="1.262019184e-03"/>
+  <xacro:property name="j6_iyy_per_kg" value="1.167925485e-03"/>
+  <xacro:property name="j6_izz_per_kg" value="8.901849246e-04"/>
+  <xacro:property name="j6_ixy_per_kg" value="-9.711467507e-06"/>
+  <xacro:property name="j6_ixz_per_kg" value="-1.102464757e-05"/>
+  <xacro:property name="j6_iyz_per_kg" value="7.675716812e-05"/>
+
+  <link name="j6_top_t_joint">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j6_top_t_joint.stl" scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j6_top_t_joint.stl" scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${0.7584 * mm} ${-5.6073 * mm} ${47.3052 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_j6_top_t_joint}"/>
+      <inertia
+        ixx="${mass_j6_top_t_joint * j6_ixx_per_kg}" iyy="${mass_j6_top_t_joint * j6_iyy_per_kg}"
+        izz="${mass_j6_top_t_joint * j6_izz_per_kg}" ixy="${mass_j6_top_t_joint * j6_ixy_per_kg}"
+        ixz="${mass_j6_top_t_joint * j6_ixz_per_kg}" iyz="${mass_j6_top_t_joint * j6_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: J6 itself - its motor lives in this top T-joint - then the gripper.
   -->
 
 </robot>
