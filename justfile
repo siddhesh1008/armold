@@ -69,25 +69,54 @@ run-simulation gui="true": build
         exit 1
     fi
 
-    # A stale RViz from a previous run keeps the old robot_description and makes
-    # it look like an edit did nothing. Clear any leftovers before launching.
-    # rviz2 and robot_state_publisher are C++ binaries, so -x matches them by
-    # name; joint_state_publisher_gui is a python script, so its process name is
-    # "python3" and only a full-cmdline match finds it. Matching cmdline is safe
-    # here because just runs this recipe from a temp file, so the pattern text is
-    # not in this script's own command line.
-    for name in rviz2 robot_state_pub; do
-        pkill -x "$name" 2>/dev/null || true
-    done
-    pkill -f joint_state_publisher_gui 2>/dev/null || true
-    pkill -f "ros2 launch armold_description" 2>/dev/null || true
-    sleep 1
+    # A stale RViz keeps the old robot_description and makes it look like an
+    # edit did nothing, and a stale slider GUI fights over /joint_states.
+    just stop
 
     echo "launching Armold simulation (gui={{gui}}) — Ctrl-C to stop"
     exec ros2 launch armold_description display.launch.py gui:={{gui}}
 
 # `just rviz` still works and does the same thing.
 alias rviz := run-simulation
+
+# Stop every process the simulation starts (safe to run any time)
+stop:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    # rviz2 and robot_state_publisher are C++ and exit on SIGTERM, so -x by name
+    # is enough. joint_state_publisher_gui is Python sitting inside a Qt event
+    # loop: the interpreter never gets scheduled to run rclpy's SIGTERM handler,
+    # so it MATCHES pkill, reports success, and keeps running. Hence TERM first
+    # for the well-behaved, then -9 for whatever ignored it.
+    #
+    # Matching on full command line is safe here only because just runs this
+    # recipe from a temp file, so these patterns are not in this script's own
+    # command line. The same pkill typed straight into a shell kills that shell.
+    pkill -x rviz2 2>/dev/null || true
+    pkill -x robot_state_pub 2>/dev/null || true
+    pkill -f joint_state_publisher_gui 2>/dev/null || true
+    pkill -f "ros2 launch armold_description" 2>/dev/null || true
+    sleep 1
+    pkill -9 -f joint_state_publisher_gui 2>/dev/null || true
+    pkill -9 -f "ros2 launch armold_description" 2>/dev/null || true
+    sleep 1
+    # The ros2 CLI daemon caches the node graph and is itself a background
+    # process. Without this, `ros2 node list` keeps reporting nodes whose
+    # processes are long gone. It restarts automatically on the next ros2 call.
+    ros2 daemon stop >/dev/null 2>&1 || true
+    sleep 1
+
+    # A SIGKILLed node never unmaps its Fast DDS shared memory, so /dev/shm fills
+    # up with orphaned segments and a freshly started daemon re-discovers ghost
+    # nodes from them. Remove only segments no live process still maps - fuser
+    # returns non-zero when a file is unused - so any other ROS project running
+    # on this machine is left strictly alone.
+    for f in /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_*; do
+        [ -e "$f" ] || continue
+        fuser -s "$f" 2>/dev/null || rm -f "$f"
+    done
+    left=$(pgrep -c -f "rviz2|joint_state_publisher_gui|robot_state_publisher" 2>/dev/null || true)
+    echo "simulation stopped (${left:-0} related process(es) left)"
 
 # Print the parsed URDF (catches xacro errors fast)
 urdf:

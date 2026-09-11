@@ -49,7 +49,7 @@
         <geometry>
           <mesh filename="${mesh_dir}/visual/j3_j4_c_joint.stl" scale="${mesh_scale}"/>
         </geometry>
-        <material name="armold_black"/>
+        <material name="armold_grey"/>
       </visual>
 
       <!-- mesh collision: a C-shaped arm has no meaningful primitive envelope -->
