@@ -502,8 +502,95 @@
     <origin xyz="0 ${c_fork_axis_y} ${c_fork_motor_z}" rpy="${pi} 0 0"/>
   </xacro:nema17>
 
+  <!-- ================================================================== -->
+  <!-- J4 - wrist pitch, driven by the stepper in the second C-joint's fork  -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: J4 itself, then J5.
+    Source mesh : J5 - J-Joint.stl  (38606 triangles)
+    Measured    : bbox x +/-31.005, y -75.750..31.000, z 0.000..66.000
+
+    WHY IT MOUNTS THE SAME WAY AS THE C-JOINT:
+      Its +Y end carries the identical rotary collar. Face heights and inner
+      radii, measured on both parts:
+
+        J-joint   z 6.800 / 7.050 / 10.190 / 12.284 / 13.330 / 16.470 / 22.750 / 23.000
+        C-joint   z 6.800 / 7.050 / 10.190 / 12.283 / 13.330 / 16.470 / 22.750 / 23.000
+        inner r   23.255 / 23.006 / 24.026 / 23.006 / 24.026 / 24.026 / 23.006 / 23.255
+
+      Same interface to the micron, so it seats on the fork's z = 0 collar face
+      exactly as the C-joint does one joint below. That makes the placement a
+      copy of J3's, not a new derivation.
+
+    ALSO MEASURED, for the step after this one: 8 x dia 3.30 holes on a 56 mm
+    bolt circle (r = 28.000) with their axis along Y, centred at (x 0, z 35.000).
+    That is where the second "J1 J5 - Mounting Bracket" bolts on to carry J5's
+    motor - the same 56 mm interface the bracket uses at J1.
+  -->
+  <xacro:property name="j5_bracket_circle_z" value="${35.000 * mm}"/>
+
+  <!--
+    Exact inertia, tetrahedral integration over the mesh, stored per unit mass.
+      centre of mass  (-0.0711, -27.7630, +27.4964) mm in the mesh frame
+  -->
+  <xacro:property name="j5_ixx_per_kg" value="1.097011592e-03"/>
+  <xacro:property name="j5_iyy_per_kg" value="6.819946309e-04"/>
+  <xacro:property name="j5_izz_per_kg" value="1.220726909e-03"/>
+  <xacro:property name="j5_ixy_per_kg" value="-1.287485109e-06"/>
+  <xacro:property name="j5_ixz_per_kg" value="1.128303868e-06"/>
+  <xacro:property name="j5_iyz_per_kg" value="2.200239253e-04"/>
+
+  <!--
+    Revolute about the child's own +Z - the blue axis in RViz - exactly as at J3,
+    because the fork interface is the same one. rpy = (pi, 0, pi) composes to
+    diag(-1, 1, -1), sending the child's +Z onto the parent's -Z, which is the
+    direction the J4 stepper's shaft points.
+
+    J2, J3 and J4 therefore all end up parallel. That is correct for this arm:
+    they are the shoulder, elbow and wrist pitch of a planar chain, and only J1
+    (base yaw) and later J5/J6 break that plane.
+
+    LIMITS ARE PROVISIONAL: +/-180 deg placeholder, as for J1-J3. The J-joint
+    will foul the fork's own arms well before that.
+  -->
+  <joint name="J4" type="revolute">
+    <parent link="j4_c_joint"/>
+    <child  link="j5_j_joint"/>
+    <origin xyz="0 ${c_fork_axis_y} ${c_fork_seat_z}" rpy="${pi} 0 ${pi}"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
+  </joint>
+
+  <link name="j5_j_joint">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j5_j_joint.stl" scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/j5_j_joint.stl" scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${-0.0711 * mm} ${-27.7630 * mm} ${27.4964 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_j5_j_joint}"/>
+      <inertia
+        ixx="${mass_j5_j_joint * j5_ixx_per_kg}" iyy="${mass_j5_j_joint * j5_iyy_per_kg}"
+        izz="${mass_j5_j_joint * j5_izz_per_kg}" ixy="${mass_j5_j_joint * j5_ixy_per_kg}"
+        ixz="${mass_j5_j_joint * j5_ixz_per_kg}" iyz="${mass_j5_j_joint * j5_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: make J4 revolute, then the J5 mounting bracket + motor on the 56 mm
+    circle, then J6 - Top T-Joint.
   -->
 
 </robot>
