@@ -156,6 +156,10 @@ import-meshes src="~/Downloads/Armold/Print-Ready Orientation":
                 cp -n "$f" "$DEST/j3_c_joint.stl" && echo "  $base -> j3_c_joint.stl" || true
                 cp -n "$f" "$DEST/j4_c_joint.stl" && echo "  $base -> j4_c_joint.stl" || true
                 ;;
+            j1_j5_mounting_bracket.stl)
+                cp -n "$f" "$DEST/j1_mounting_bracket.stl" && echo "  $base -> j1_mounting_bracket.stl" || true
+                cp -n "$f" "$DEST/j5_mounting_bracket.stl" && echo "  $base -> j5_mounting_bracket.stl" || true
+                ;;
             *)
                 cp -n "$f" "$DEST/$clean" && echo "  $base -> $clean" || true
                 ;;

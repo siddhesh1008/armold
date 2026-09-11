@@ -15,6 +15,7 @@
   <xacro:include filename="$(find armold_description)/urdf/parameters.xacro"/>
   <xacro:include filename="$(find armold_description)/urdf/nema17.xacro"/>
   <xacro:include filename="$(find armold_description)/urdf/c_joint.xacro"/>
+  <xacro:include filename="$(find armold_description)/urdf/bracket.xacro"/>
 
   <!-- ================================================================== -->
   <!-- Conversions and shared properties                                   -->
@@ -178,41 +179,8 @@
     <origin xyz="0 0 ${j1_base_height}" rpy="0 0 0"/>
   </joint>
 
-  <link name="j1_mounting_bracket">
-
-    <visual>
-      <!-- mesh authored about this exact frame; used unmodified -->
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="${mesh_dir}/visual/j1_j5_mounting_bracket.stl"
-              scale="${mesh_scale}"/>
-      </geometry>
-      <material name="armold_blue"/>
-    </visual>
-
-    <!--
-      A cylinder is not an approximation here: the part is a plain disc, so
-      r = 31.000 mm, h = 8.050 mm IS its exact envelope. Only internal pockets
-      and bolt holes are lost, and those cannot participate in a collision.
-    -->
-    <collision>
-      <origin xyz="0 0 ${j1_bracket_thickness / 2}" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="${j1_bracket_radius}" length="${j1_bracket_thickness}"/>
-      </geometry>
-    </collision>
-
-    <inertial>
-      <origin xyz="0 0 ${j1_bracket_thickness / 2}" rpy="0 0 0"/>
-      <mass value="${mass_j1_j5_bracket}"/>
-      <inertia
-        ixx="${mass_j1_j5_bracket * (3 * j1_bracket_radius * j1_bracket_radius + j1_bracket_thickness * j1_bracket_thickness) / 12}"
-        iyy="${mass_j1_j5_bracket * (3 * j1_bracket_radius * j1_bracket_radius + j1_bracket_thickness * j1_bracket_thickness) / 12}"
-        izz="${mass_j1_j5_bracket * j1_bracket_radius * j1_bracket_radius / 2}"
-        ixy="0" ixz="0" iyz="0"/>
-    </inertial>
-
-  </link>
+  <xacro:bracket_link name="j1_mounting_bracket" mesh="j1_mounting_bracket.stl"
+                      mass="${mass_bracket}"/>
 
   <!--
     The J1 stepper, held by the mounting bracket above it. Measured:
@@ -588,9 +556,46 @@
 
   </link>
 
+  <!-- ================================================================== -->
+  <!-- J5 stepper mount - STATIC, bolted to the J-joint                     -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: make J4 revolute, then the J5 mounting bracket + motor on the 56 mm
-    circle, then J6 - Top T-Joint.
+    Measured on the J-joint:
+      face        y = -75.750, r 25.000..31.000 about (x 0, z 35.000)
+      bolt circle 8 x dia 3.30 at r = 28.000, same centre, axis along Y
+
+    That face is the same interface the base's top uses at J1 - identical radii,
+    identical 56 mm circle - so the same bracket bolts on the same way. Its
+    z = 0 motor face presses against y = -75.750, its body-side cavity faces back
+    into the J-joint, and rpy = (pi/2, 0, 0) turns the bracket's +Z onto the
+    J-joint's -Y so the shaft points outward, away from the arm.
+  -->
+  <xacro:property name="j5_bracket_face_y" value="${-75.750 * mm}"/>
+
+  <joint name="j5_mount_fixed" type="fixed">
+    <parent link="j5_j_joint"/>
+    <child  link="j5_mounting_bracket"/>
+    <origin xyz="0 ${j5_bracket_face_y} ${j5_bracket_circle_z}" rpy="${pi/2} 0 0"/>
+  </joint>
+
+  <xacro:bracket_link name="j5_mounting_bracket" mesh="j5_mounting_bracket.stl"
+                      mass="${mass_bracket}"/>
+
+  <!--
+    The J5 stepper - a 23 mm "pancake" NEMA 17. Same relationship as at J1: the
+    bracket is placed over the motor, so the motor's face presses on the
+    bracket's z = 0 and its body hangs into the cavity behind, shaft pointing up
+    through the bracket to drive whatever seats on z = 8.050. That is the macro's
+    native frame, so rpy = 0.
+  -->
+  <xacro:nema17 name="j5_motor" parent="j5_mounting_bracket"
+                mass="${mass_nema17_23}" body_length="${23.0 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:nema17>
+
+  <!--
+    NEXT: J5 itself, then J6 - Top T-Joint, then the gripper.
   -->
 
 </robot>

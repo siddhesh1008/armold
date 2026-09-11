@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+  J1/J5 Mounting Bracket - the reusable stepper mount.
+
+  Armold uses this part twice: at J1, bolted to the base's top face holding the
+  base stepper, and at J5, bolted to the J-joint holding the wrist stepper. Both
+  come from this macro so geometry, mass and inertia cannot drift apart.
+
+  Each instance points at its own mesh file (j1_mounting_bracket.stl,
+  j5_mounting_bracket.stl) - byte-identical copies of the one supplied part,
+  named for the joint they serve so a TF tree stays readable.
+
+  MEASURED (mesh frame):
+    z = 0       motor face; dia 23.50 central opening is the seat for the
+                NEMA 17's dia 22 pilot boss. Outer annulus r 11.750..30.850.
+    z = 3.0     bore narrows to dia 13.00 - shaft clearance
+    z = 8.050   collar seat face, r 6.750..30.500, countersunk dia 6.50 at the
+                four 31.0 mm-square motor bolts so the heads sit flush
+    outer       r 31.00001, circularity rms 0.0 microns
+
+  So the bracket is placed OVER its motor: the motor's face presses on z = 0,
+  its body hangs into whatever cavity is behind, and the shaft comes up through
+  to drive the part whose collar seats on z = 8.050.
+
+  Inertia is exact - tetrahedral integration over the mesh, per unit mass.
+  Volume 21 045.9 mm^3, com (0, 0, +4.1278) mm. ixx == iyy and the off-diagonals
+  land at 1e-17, confirming the part is axisymmetric as the geometry implies.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="brk_ixx_per_kg" value="2.667762281e-04"/>
+  <xacro:property name="brk_iyy_per_kg" value="2.667769209e-04"/>
+  <xacro:property name="brk_izz_per_kg" value="5.231495328e-04"/>
+
+  <xacro:property name="brk_radius"    value="${31.00001 * mm}"/>
+  <xacro:property name="brk_thickness" value="${8.050 * mm}"/>
+  <xacro:property name="brk_motor_z"   value="${0.000 * mm}"/>   <!-- motor face -->
+  <xacro:property name="brk_seat_z"    value="${8.050 * mm}"/>   <!-- collar seat -->
+
+  <xacro:macro name="bracket_link" params="name mesh mass">
+    <link name="${name}">
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${mesh_dir}/visual/${mesh}" scale="${mesh_scale}"/>
+        </geometry>
+        <!-- blue, matching the printed part -->
+        <material name="armold_blue"/>
+      </visual>
+
+      <!--
+        A cylinder is not an approximation here: the part is a plain disc, so
+        r = 31.000 mm, h = 8.050 mm IS its exact envelope.
+      -->
+      <collision>
+        <origin xyz="0 0 ${brk_thickness / 2}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${brk_radius}" length="${brk_thickness}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0 0 ${4.1278 * mm}" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${mass * brk_ixx_per_kg}" iyy="${mass * brk_iyy_per_kg}"
+                 izz="${mass * brk_izz_per_kg}" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+
+    </link>
+  </xacro:macro>
+
+</robot>

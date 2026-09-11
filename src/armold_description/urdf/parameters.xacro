@@ -27,11 +27,11 @@
        recorded for completeness and for shipping-weight sums only. -->
   <xacro:property name="mass_j1_base" value="0.0763"/>
 
-  <!-- [ESTIMATE] J1/J5 mounting bracket.
+  <!-- [ESTIMATE] Mounting bracket - the stepper mount used at J1 and again at J5.
        Mesh solid volume 21 045.9 mm^3 = 21.0459e-6 m^3, x PLA 1240 kg/m^3.
        Static - it clamps the motor body and is part of the fixed base
        assembly - so like the base its mass never enters the dynamics. -->
-  <xacro:property name="mass_j1_j5_bracket" value="0.0261"/>
+  <xacro:property name="mass_bracket" value="0.0261"/>
 
   <!-- [ESTIMATE] J2 base T-joint - the first MOVING link.
        Mesh solid volume 112 430.4 mm^3 = 112.4304e-6 m^3, x PLA 1240 kg/m^3.
@@ -67,6 +67,11 @@
        AND is the heaviest single item so far - about 3x the T-joint itself - so
        it dominates the J1 inertia. This is the most valuable part to weigh. -->
   <xacro:property name="mass_nema17_60" value="0.450"/>
+
+  <!-- [ESTIMATE] NEMA 17, 23 mm body - the J5 wrist motor. A short "pancake"
+       NEMA 17; catalogue weights are around 0.13-0.17 kg. It rides at the far
+       end of the arm, so its mass acts on the longest lever in the machine. -->
+  <xacro:property name="mass_nema17_23" value="0.150"/>
 
   <!-- ================================================================ -->
   <!-- Material densities (for volume-based estimates)                   -->
