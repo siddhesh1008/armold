@@ -60,6 +60,10 @@
        and carries the gripper. Mesh solid volume 58 763.0 mm^3, x PLA 1240. -->
   <xacro:property name="mass_gripper_connection" value="0.0729"/>
 
+  <!-- [ESTIMATE] Gripper housing - bolted to the connection hub, carries the
+       jaw mechanism. Mesh solid volume 26 134.9 mm^3, x PLA 1240. -->
+  <xacro:property name="mass_gripper_housing" value="0.0324"/>
+
   <!-- ================================================================ -->
   <!-- Motors                                                            -->
   <!-- ================================================================ -->

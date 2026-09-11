@@ -773,8 +773,82 @@
 
   </link>
 
+  <!-- ================================================================== -->
+  <!-- Gripper housing - bolted to the connection hub, no relative motion   -->
+  <!-- ================================================================== -->
   <!--
-    NEXT: make J6 revolute, then the rest of the gripper.
+    Source mesh : Gripper - Housing.stl  (5558 triangles)
+    Measured    : bbox x +/-25.000, y +/-20.000, z 0.000..25.150
+
+    MATING, from the two parts alone:
+      footprint   housing's z = 0.250 face spans x +/-25.000, y +/-20.000 with a
+                  max radius of 31.206. The connection's z = 31.905 top face has
+                  exactly the same three numbers. Below z = 0.250 the housing
+                  steps in to +/-24.750 / +/-19.750 - a 0.25 mm lead-in chamfer,
+                  not a spigot.
+      screws      housing has 4 x dia 4.00 bores at (+/-23.000, +/-18.000)
+                  running z 4.5..18.0; the connection has 4 x dia 4.00 at the
+                  SAME (+/-23.000, +/-18.000) near its top.
+
+    ORIENTATION: note that neither of the above pins it. The +/-25 / +/-20
+    footprint and the (+/-23, +/-18) hole pattern are both symmetric under a
+    180 deg turn about Z, so measurement alone leaves two valid orientations.
+    The correct one is yaw = 180 deg, per the assembly drawing.
+
+    So: seats on the hub's top face at z = 31.905 mm in the connection's frame,
+    turned 180 deg about Z. Mesh used exactly as authored - the flip lives in
+    the joint, not in the geometry.
+
+    FIXED, not revolute: the two are bolted together. The gripper's moving parts
+    are the slides and arms inside this housing, which come next.
+  -->
+  <joint name="gripper_housing_fixed" type="fixed">
+    <parent link="gripper_connection"/>
+    <child  link="gripper_housing"/>
+    <origin xyz="0 0 ${31.905 * mm}" rpy="0 0 ${pi}"/>
+  </joint>
+
+  <!--
+    Exact inertia, tetrahedral integration, per unit mass.
+      centre of mass (+1.4296, -1.4545, +10.8461) mm in the mesh frame
+  -->
+  <xacro:property name="gh_ixx_per_kg" value="1.980362263e-04"/>
+  <xacro:property name="gh_iyy_per_kg" value="3.053506827e-04"/>
+  <xacro:property name="gh_izz_per_kg" value="4.283892400e-04"/>
+  <xacro:property name="gh_ixy_per_kg" value="-3.928712683e-06"/>
+  <xacro:property name="gh_ixz_per_kg" value="6.637863494e-06"/>
+  <xacro:property name="gh_iyz_per_kg" value="4.358863405e-06"/>
+
+  <link name="gripper_housing">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/gripper_housing.stl" scale="${mesh_scale}"/>
+      </geometry>
+      <material name="armold_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/visual/gripper_housing.stl" scale="${mesh_scale}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${1.4296 * mm} ${-1.4545 * mm} ${10.8461 * mm}" rpy="0 0 0"/>
+      <mass value="${mass_gripper_housing}"/>
+      <inertia
+        ixx="${mass_gripper_housing * gh_ixx_per_kg}" iyy="${mass_gripper_housing * gh_iyy_per_kg}"
+        izz="${mass_gripper_housing * gh_izz_per_kg}" ixy="${mass_gripper_housing * gh_ixy_per_kg}"
+        ixz="${mass_gripper_housing * gh_ixz_per_kg}" iyz="${mass_gripper_housing * gh_iyz_per_kg}"/>
+    </inertial>
+
+  </link>
+
+  <!--
+    NEXT: the gripper's moving parts - slides, arms and gear inside this housing.
   -->
 
 </robot>
