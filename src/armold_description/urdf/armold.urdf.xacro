@@ -691,7 +691,7 @@
   </xacro:nema17>
 
   <!-- ================================================================== -->
-  <!-- J6 - carries the gripper connection. STATIC FOR NOW.                 -->
+  <!-- J6 - gripper roll, driven by the 23 mm stepper in the top T-joint   -->
   <!-- ================================================================== -->
   <!--
     Source mesh : Gripper - Connection.stl  (27357 triangles)
@@ -716,13 +716,22 @@
     off the plate. That is below the mesh's own precision and is left as authored
     rather than nudged - the geometry is maintained exactly.
 
-    FIXED for now, by request. The origin below is already the axis of rotation,
-    so J6's motion is a type change plus an axis and limit.
+    Revolute about the hub's own +Z - the blue axis in RViz. rpy = (pi/2, 0, 0)
+    sends that +Z onto the T-joint's -Y, which is the direction the J6 shaft
+    points, so the axis is the shaft and "0 0 1" in the joint frame says so.
+    This is the same relationship J2 has with the base T-joint, one part family
+    and one pocket design reused at both ends of the arm.
+
+    LIMITS ARE PROVISIONAL: +/-180 deg placeholder, as for J1-J5. A hub pressed
+    on a bare shaft has no hard stop, so the real limit will come from cabling
+    rather than from geometry.
   -->
-  <joint name="J6" type="fixed">
+  <joint name="J6" type="revolute">
     <parent link="j6_top_t_joint"/>
     <child  link="gripper_connection"/>
     <origin xyz="0 ${-36.000 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-pi}" upper="${pi}" effort="10.0" velocity="3.14"/>
   </joint>
 
   <!--
