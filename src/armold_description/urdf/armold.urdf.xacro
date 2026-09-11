@@ -663,7 +663,36 @@
   </link>
 
   <!--
-    NEXT: J6 itself - its motor lives in this top T-joint - then the gripper.
+    The J6 stepper - a 23 mm NEMA 17 - in the top T-joint.
+
+    Measured on J6 - Top T-Joint.stl, and it comes out IDENTICAL to the base
+    T-joint's motor pocket, number for number:
+
+      bolt pattern  4 x dia 3.00 at (x, z) = (+/-15.500, 45.500) and
+                    (+/-15.500, 76.500) -> 31.0 mm square, centre (0, 61.000)
+      plate         flat faces at y = -36.000 (outer) and y = -27.950 (inner)
+      screws        dia 6.50 counterbore at y = -36.000, dia 3.00 clearance
+      pilot         dia 23.00 / 23.50 recess at y -29.0..-27.0 - the NEMA 17
+                    dia 22 boss seat
+      shaft         dia 13.00 clearance bore through the plate
+
+    Same part family, same pocket: so the pose is the same as j2_motor's, with
+    only the body length differing (23 mm here against 60 mm at J2). Mounting
+    face y = -27.950, body running +Y, shaft pointing -Y; rpy = (pi/2, 0, 0)
+    turns the macro's +Z onto -Y.
+
+    Body then spans y -27.950..-4.950, comfortably inside the part's -36.000
+    to +33.500 extent.
+  -->
+  <xacro:nema17 name="j6_motor" parent="j6_top_t_joint"
+                mass="${mass_nema17_23}" body_length="${23.0 * mm}"
+                visual="true" shaft="true">
+    <origin xyz="0 ${-27.950 * mm} ${61.000 * mm}" rpy="${pi/2} 0 0"/>
+  </xacro:nema17>
+
+  <!--
+    NEXT: J6 itself - the rotation this motor drives - and the Micro Gripper
+    MK II that mounts on it.
   -->
 
 </robot>
